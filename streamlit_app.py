@@ -1,9 +1,10 @@
 """fxlab dashboard - entry point.
 
 Run it by double-clicking run_dashboard.bat, or:
-    .venv\\Scripts\\streamlit run streamlit_app.py
+    .venv\\Scripts\\streamlit run streamlit_app.py --server.address 127.0.0.1
 
-It serves http://127.0.0.1:8501 to this computer only (see .streamlit/config.toml). It drives
+That serves http://127.0.0.1:8501 to this computer only. The same code also runs
+online on Streamlit Community Cloud (invite-only). It drives
 the same code as the CLI (fxlab/workflow.py), never places a real order, and
 cannot: live trading is disabled at the broker-interface level.
 """

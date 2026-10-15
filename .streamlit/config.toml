@@ -2,12 +2,13 @@
 primaryColor = "#2a78d6"
 
 [server]
-# Listen on THIS computer only. Without this, Streamlit also serves your local
-# network, so anyone on your Wi-Fi could open the app and press its buttons
-# (including the kill switch).
-address = "127.0.0.1"
-# no "enter your email" prompt on first launch (open http://127.0.0.1:8501 yourself,
-# or use run_dashboard.bat which opens the browser for you)
+# NOTE: the "this computer only" restriction (--server.address 127.0.0.1) is passed
+# by run_dashboard.bat, NOT set here. This file is also used by the online copy on
+# Streamlit Community Cloud, where binding to 127.0.0.1 would make the app
+# unreachable. If you start the app by hand on your PC, add:
+#     --server.address 127.0.0.1
+# otherwise anyone on your Wi-Fi could open it and press its buttons.
+# no "enter your email" prompt on first launch
 headless = true
 
 [browser]

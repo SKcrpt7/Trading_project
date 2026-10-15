@@ -53,9 +53,9 @@ Copy-Item .env.example .env
 
 **Double-click `run_dashboard.bat`.** It starts the app and opens
 <http://127.0.0.1:8501> in your browser after a few seconds. Close the black window
-to stop it. (Manual start: `.\.venv\Scripts\streamlit run streamlit_app.py`.)
+to stop it. (Manual start: `.\.venv\Scripts\streamlit run streamlit_app.py --server.address 127.0.0.1`.)
 
-The app is served to **this computer only** (`.streamlit/config.toml`), drives the
+Started that way, the app is served to **this computer only**. It drives the
 same code as the CLI (`fxlab/workflow.py`), and cannot trade live. Pages follow
 the workflow:
 

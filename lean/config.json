@@ -1,0 +1,9 @@
+{
+    "algorithm-language": "Python",
+    "parameters": {},
+    "description": "EUR/USD EMA trend-follower (research example) mirroring the local fxlab strategy.",
+    "local-id": 1,
+    "algorithm-type-name": "EURUSDTrendAlgorithm",
+    "organization-id": "",
+    "cloud-id": null
+}

@@ -1,0 +1,40 @@
+# ============================================================================
+# Backtest cost model + evaluation protocol.
+# Costs are modelled explicitly so you can see exactly what each trade "paid".
+# ============================================================================
+
+costs:
+  # Spread: the bid/ask gap you cross on entry AND exit. In pips.
+  spread_pips: 1.0
+  # Commission per side, per standard lot (100,000 units), in account currency.
+  commission_per_lot_per_side: 3.5
+  # Slippage: extra adverse price movement on market/stop fills, in pips.
+  slippage_pips: 0.5
+  # Swap / overnight financing per lot, per night held, in account currency.
+  # Sign convention: negative = you pay. Applied when a position is held past
+  # the daily rollover. Zero by default (depends heavily on broker & rates).
+  swap_long_per_lot_per_night: -2.0
+  swap_short_per_lot_per_night: -0.5
+  rollover_hour_utc: 21             # ~5pm New York
+
+# Evaluation protocol - prevents fooling yourself.
+evaluation:
+  # Chronological split. Development data is used for building/tuning. The
+  # evaluation slice is held out and should be touched as little as possible.
+  dev_fraction: 0.7                 # first 70% of history = development
+  # Walk-forward: roll an in-sample/out-of-sample window across history.
+  walk_forward:
+    enabled: true
+    train_bars: 3000
+    test_bars: 1000
+    step_bars: 1000
+  # Sensitivity: re-run with each key parameter nudged +/- to check robustness.
+  sensitivity:
+    enabled: true
+    params: [fast_ema, slow_ema, stop_atr_mult, reward_risk]
+    pct_steps: [-0.2, -0.1, 0.1, 0.2]
+  # Cost stress: re-run the whole backtest with worse costs.
+  cost_stress:
+    enabled: true
+    spread_multiplier: 2.0
+    slippage_multiplier: 2.0

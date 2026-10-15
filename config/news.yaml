@@ -1,0 +1,43 @@
+# ============================================================================
+# Economic event universe + news blackout configuration.
+#
+# IMPORTANT DATA-INTEGRITY RULE:
+#   - Scheduled release TIMES are stored in UTC and shown in America/Toronto.
+#   - Backtests must NEVER use an event before it was publicly released.
+#   - FRED gives official release DATES. Intraday TIMES below are CONVENTIONAL
+#     (well-known standard release times). Events marked time_is_exact: false
+#     are treated conservatively; historical event-driven features stay limited
+#     unless you supply a source with verified timestamps.
+# ============================================================================
+
+provider: sample                  # sample | fred
+# 'sample'  -> use the bundled curated events (data/sample/economic_events_sample.csv)
+# 'fred'    -> fetch official release DATES from FRED (needs FRED_API_KEY) and
+#              attach conventional times. Falls back to 'sample' if no key.
+
+# Conventional US release times (local Eastern), applied when a source only gives a date.
+# These are documented market conventions, NOT per-release verified timestamps.
+conventional_times_eastern:
+  CPI: "08:30"
+  NFP: "08:30"          # Nonfarm Payrolls / Employment Situation
+  FOMC: "14:00"         # FOMC rate decision statement
+  GDP: "08:30"
+  RETAIL_SALES: "08:30"
+
+blackout:
+  enabled: true
+  block_minutes_before: 30
+  block_minutes_after: 30
+  min_impact: high                # high | medium | low (and above)
+  # If an event's time is only conventional (time_is_exact=false), widen the window
+  # by this safety margin on each side, because the real time is uncertain.
+  uncertain_time_extra_minutes: 30
+
+# Which event types to treat as high impact for EUR/USD.
+high_impact_titles:
+  - "FOMC"
+  - "CPI"
+  - "NFP"
+  - "Nonfarm Payrolls"
+  - "ECB Main Refinancing Rate"
+  - "ECB Press Conference"

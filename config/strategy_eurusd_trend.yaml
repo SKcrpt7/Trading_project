@@ -1,0 +1,64 @@
+# ============================================================================
+# RESEARCH EXAMPLE STRATEGY - NOT a claim that it is profitable.
+# This is a worked example so you can see how a rule-based strategy is specified,
+# backtested, reviewed, and (if eligible) paper-traded. Treat every number as a
+# starting point to be tested, not as a recommendation.
+#
+# This file follows the strategy specification template (docs/strategy_spec_template.md).
+# ============================================================================
+
+name: eurusd_trend_ema
+version: "0.1.0"
+kind: trend_following          # trend_following | breakout | mean_reversion
+description: >
+  EMA-crossover trend follower on EUR/USD H1. Goes long when the fast EMA crosses
+  above the slow EMA while price is above the slow EMA; short on the mirror image.
+  ATR-based protective stop and a fixed reward:risk target.
+
+# --- Market & timeframe ---
+symbol: EURUSD
+timeframe: H1                  # bar size used for signals
+# Trading session filter (exchange-free FX trades ~24/5; we restrict to liquid hours).
+# Times are LOCAL market convention in UTC. London+NY overlap is the most liquid.
+session:
+  enabled: true
+  start_utc: "07:00"           # ~London open
+  end_utc: "20:00"             # ~NY afternoon
+  trade_days: [Mon, Tue, Wed, Thu, Fri]
+
+# --- Entry rules (all must be true on a CLOSED bar) ---
+entry:
+  fast_ema: 20
+  slow_ema: 50
+  # long when fast crosses above slow AND close > slow_ema
+  # short when fast crosses below slow AND close < slow_ema
+  allow_long: true
+  allow_short: true
+
+# --- Exit / stop / target ---
+exit:
+  atr_period: 14
+  stop_atr_mult: 2.0           # protective stop = entry -/+ stop_atr_mult * ATR
+  reward_risk: 1.5             # take-profit distance = reward_risk * stop distance
+  time_stop_bars: 48           # exit if neither stop nor target hit within N bars (0 = disabled)
+  exit_on_opposite_signal: true
+
+# --- Position sizing (actual sizing math lives in fxlab/risk/manager.py) ---
+sizing:
+  method: fixed_fractional_risk   # risk a fixed % of equity per trade, derived from stop distance
+  risk_per_trade_pct: 0.5         # % of account equity risked if stop is hit
+
+# --- News restrictions (see config/news.yaml for the event universe) ---
+news:
+  blackout_enabled: true
+  block_minutes_before: 30
+  block_minutes_after: 30
+  min_impact: high                # only block around 'high' impact events
+
+# --- Invalidation conditions (when to stop trusting this strategy) ---
+invalidation:
+  # Human-readable conditions the review/monitoring should watch for.
+  - "Live/paper max drawdown exceeds 1.5x the backtest max drawdown."
+  - "Realised average spread is persistently >2x the modelled spread."
+  - "20 consecutive losing trades (vs backtest worst losing streak)."
+  - "Rolling 3-month profit factor falls below 0.8 in paper trading."

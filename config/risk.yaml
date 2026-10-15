@@ -1,0 +1,28 @@
+# ============================================================================
+# Account-level risk limits. These are HARD limits enforced by the risk manager
+# (fxlab/risk/manager.py) regardless of what any strategy wants to do.
+# ============================================================================
+
+account:
+  starting_equity: 10000.0     # account currency (USD here)
+  currency: USD
+
+limits:
+  max_risk_per_trade_pct: 1.0     # a single trade may never risk more than this
+  max_daily_loss_pct: 3.0         # stop trading for the day after this drawdown
+  max_open_positions: 1           # how many concurrent positions allowed
+  max_position_risk_pct: 1.0      # redundant ceiling on any one position
+  max_spread_pips: 2.0            # refuse entries when quoted spread is wider than this
+  stale_data_seconds: 120         # treat market data older than this as stale -> no trading
+
+controls:
+  require_protective_stop: true   # NEVER enter without a working stop order
+  require_take_profit: false      # target is encouraged but not mandatory
+  kill_switch_file: "KILL_SWITCH" # if this file exists in project root, halt all new entries
+
+# Pip definition per symbol (value of 1 pip move for 1 unit of base currency,
+# quoted in account currency). For EUR/USD, 1 pip = 0.0001 of the USD quote.
+pip_size:
+  EURUSD: 0.0001
+  GBPUSD: 0.0001
+  USDJPY: 0.01

@@ -1,0 +1,28 @@
+# ============================================================================
+# Review thresholds -> map backtest evidence to a decision:
+#   REJECT / NEEDS_INVESTIGATION / ELIGIBLE_FOR_PAPER
+#
+# These are DELIBERATELY CONSERVATIVE and configurable. Passing every threshold
+# makes a strategy eligible for PAPER trading only - never live, and never a
+# promise of profit. Failing a 'reject' gate is disqualifying on its own.
+# ============================================================================
+
+# Hard rejection gates (any one true => REJECT)
+reject_if:
+  min_trades_lt: 30               # too few trades to say anything
+  net_return_pct_lt: 0.0          # lost money net of costs on evaluation data
+  max_drawdown_pct_gt: 35.0       # unacceptable drawdown
+  profit_factor_lt: 1.0           # gross losses >= gross wins
+
+# Eligibility gates (ALL must be true => ELIGIBLE_FOR_PAPER, else NEEDS_INVESTIGATION)
+eligible_if:
+  min_trades_gte: 50
+  net_return_pct_gte: 2.0
+  profit_factor_gte: 1.2
+  max_drawdown_pct_lte: 20.0
+  # Robustness: out-of-sample (evaluation) profit factor must not collapse vs dev.
+  oos_profit_factor_gte: 1.05
+  # Cost-stress: must stay profitable with doubled costs.
+  cost_stress_net_return_pct_gte: 0.0
+  # Walk-forward: majority of out-of-sample windows profitable.
+  walk_forward_positive_window_fraction_gte: 0.5

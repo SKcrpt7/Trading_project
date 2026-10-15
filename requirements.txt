@@ -1,0 +1,15 @@
+# Core (required to run the local research/paper system today)
+pandas>=2.2
+numpy>=1.26
+pyyaml>=6.0
+requests>=2.31
+
+# Testing
+pytest>=8.0
+
+# Dashboard (streamlit_app.py). Charts use Altair, which Streamlit installs.
+streamlit>=1.57
+
+# Optional: QuantConnect LEAN CLI. Requires Docker Desktop to run locally.
+# Install separately when you are ready:  pip install lean
+# lean

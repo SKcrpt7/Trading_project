@@ -1,0 +1,24 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+*.sqlite
+*.db
+.pytest_cache/
+reports/*.html
+reports/*.json
+reports/*.jsonl
+reports/*.md
+reports/*.csv
+!reports/.gitkeep
+data/cache/
+.DS_Store
+
+# your own price data uploaded through the dashboard (may be licensed / large)
+data/user/
+# runtime safety switch - local state, never versioned
+KILL_SWITCH
+# Streamlit secrets (if you ever add any)
+.streamlit/secrets.toml
+# personal Claude Code settings
+.claude/settings.local.json

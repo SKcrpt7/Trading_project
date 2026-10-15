@@ -1,0 +1,29 @@
+[project]
+name = "fxlab"
+version = "0.1.0"
+description = "Forex strategy research, backtesting, and paper-trading automation (educational)"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dashboard = ["streamlit>=1.57"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+fxlab = "fxlab.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["fxlab*"]

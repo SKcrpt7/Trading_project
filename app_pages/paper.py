@@ -13,20 +13,20 @@ fp = journal.data_fingerprint(data)
 decision = journal.latest_decision(name, version, fp)
 kill_on = workflow.kill_switch_active(c)
 
-st.caption("Replays bars through the same strategy, **risk manager** (daily loss limit, spread "
-           "limit, stale data, duplicates, kill switch) and a **simulated broker**, logging "
-           "every step to the audit log. All fills are simulated; nothing reaches a real broker.")
+ui_common.intro("paper")
+with st.container(horizontal=True):
+    st.badge(f"{name} · v{version}", icon=":material/tune:", color="blue")
+    ui_common.decision_badge(decision["decision"] if decision else None)
+    st.badge("Simulated fills only", icon=":material/science:", color="gray")
 
 allowed = True
 if decision is None or decision["decision"] != "ELIGIBLE_FOR_PAPER":
-    status = decision["decision"] if decision else "not reviewed"
-    st.warning(f"v{version} is **{status}**. In the real workflow only strategies marked "
-               "ELIGIBLE move on to paper trading. You can still run it to see how paper "
-               "trading works.", icon=":material/warning:", title="Not eligible for paper")
+    st.warning("Normally only ELIGIBLE strategies get paper-traded. You can still run it as a demo.",
+               icon=":material/warning:")
     allowed = st.checkbox("Run anyway as a demo")
 if kill_on:
-    st.error("Kill switch is ON, so every entry will be blocked. Turn it off on the Monitor page.",
-             icon=":material/power_settings_new:", title="Kill switch active")
+    st.error("Kill switch is ON - every entry will be blocked. Turn it off on Monitor.",
+             icon=":material/power_settings_new:")
 
 with st.container(border=True):
     o1, o2 = st.columns(2, vertical_alignment="bottom")
@@ -48,6 +48,7 @@ if st.button("Run paper simulation", icon=":material/play_arrow:", type="primary
 stored = st.session_state.get("paper_run")
 out = stored[1] if stored and stored[0] == run_key else None
 if out is None:
+    ui_common.next_step("paper")
     st.stop()
 
 res, btm, pm = out.result, out.backtest_metrics, out.paper_metrics
@@ -58,7 +59,8 @@ if res.entries_blocked_latched:
 
 ui_common.metric_row(pm)
 
-st.subheader("Backtest vs paper on the same bars")
+st.subheader("Backtest vs paper", icon=":material/compare_arrows:",
+             help="Same bars, same strategy. They should match unless a paper-only safety gate fired.")
 cmp = pd.DataFrame([
     {"metric": "Trades", "backtest": btm.trade_count, "paper": pm.trade_count},
     {"metric": "Net return %", "backtest": btm.net_return_pct, "paper": pm.net_return_pct},
@@ -67,12 +69,10 @@ cmp = pd.DataFrame([
 ])
 st.dataframe(cmp, hide_index=True, alt="Backtest versus paper metrics")
 if btm.trade_count == pm.trade_count and abs(btm.net_return_pct - pm.net_return_pct) < 0.01:
-    st.success("Paper matches the backtest: the engines agree and no extra safety gate fired.",
-               icon=":material/check_circle:")
+    st.badge("Paper matches the backtest", icon=":material/check_circle:", color="green")
 else:
-    st.info("Paper differs from the backtest. That's expected only when the paper-only safety "
-            "gates fired (counts below). Any other difference would be a bug.",
-            icon=":material/info:")
+    st.badge("Paper differs - see the safety-gate counts below", icon=":material/info:",
+             color="orange")
 
 curves = {"Backtest": out.backtest_result.equity_curve, "Paper": res.equity_curve}
 ui_common.compare_equity_chart(
@@ -91,5 +91,8 @@ with c2:
                  column_config={"net": st.column_config.NumberColumn(format="$%.2f")})
 
 with st.expander(f"Paper trades ({len(res.trades)})", icon=":material/receipt_long:"):
-    st.dataframe(ui_common.trades_frame(res.trades), hide_index=True, alt="Paper trade log")
-st.caption(f"Audit log now holds {out.audit_rows:,} rows. Inspect them on the Monitor page.")
+    st.dataframe(ui_common.trades_frame(res.trades), hide_index=True, alt="Paper trade log",
+                 column_config=ui_common.TRADE_COLUMNS)
+st.caption(f"Audit log: {out.audit_rows:,} rows (see Monitor).")
+
+ui_common.next_step("paper")

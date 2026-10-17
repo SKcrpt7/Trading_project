@@ -12,17 +12,14 @@ fname = st.session_state.strategy_file
 version = str(s.get("version", "0"))
 risk_cap = float(c["risk"]["limits"]["max_risk_per_trade_pct"])
 
+ui_common.intro("strategy")
 with st.container(border=True):
-    st.markdown(f"**{s['name']}** · v{version} · `{s.get('kind')}` · {s['symbol']} {s['timeframe']} "
-                f"· file `config/{fname}`")
+    with st.container(horizontal=True):
+        st.badge(f"{s['name']} · v{version}", icon=":material/tune:", color="blue")
+        st.badge(f"{s.get('kind')}", color="gray")
+        st.badge(f"{s['symbol']} {s['timeframe']}", icon=":material/currency_exchange:", color="gray")
     if s.get("description"):
         st.caption(s["description"].strip())
-
-st.info("Saving a change creates a **new version**; the old file is archived to "
-        "`config/strategy_history/`, so every result stays traceable to its exact parameters. "
-        "Only the trend-following (EMA crossover) logic is implemented in code, so these "
-        "fields are its parameters. A different kind of strategy needs a new Python class "
-        "(see `fxlab/pipeline.py`).", icon=":material/info:")
 
 SECTIONS = {"entry": "Entry", "exit": "Exit", "sizing": "Position sizing",
             "session": "Trading session", "news": "News blackout"}
@@ -57,14 +54,14 @@ def widget(f: store.Field, current):
 
 with st.form(f"edit_{key_sfx}", border=True):
     params = {}
-    cols = st.columns(len(SECTIONS))
-    for col, (sec, title) in zip(cols, SECTIONS.items()):
-        with col:
-            st.markdown(f"**{title}**")
+    # one tab per section keeps the form short (and readable on a phone); every
+    # tab's fields are still part of the form when you save
+    tabs = st.tabs(list(SECTIONS.values()))
+    for tab, sec in zip(tabs, SECTIONS):
+        with tab:
             for f in [f for f in store.EDITABLE_FIELDS if f.section == sec]:
                 params[(f.section, f.key)] = widget(f, store.get_value(s, f.section, f.key))
 
-    st.divider()
     left, right = st.columns(2)
     with left:
         new_version = st.text_input("New version", value=store.bump_version(version),
@@ -114,3 +111,5 @@ with st.expander(f"Version history ({len(hist)} archived)", icon=":material/hist
 
 with st.expander("Current YAML file", icon=":material/code:"):
     st.code(store.read_text(fname), language="yaml")
+
+ui_common.next_step("strategy")

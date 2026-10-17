@@ -49,7 +49,10 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-## Dashboard (the easiest way to use it)
+## PipLab dashboard (the easiest way to use it)
+
+The web interface is branded **PipLab** (dark "trading terminal" theme in
+`.streamlit/config.toml`, logo in `assets/`). The Python package keeps the name `fxlab`.
 
 **Double-click `run_dashboard.bat`.** It starts the app and opens
 <http://127.0.0.1:8501> in your browser after a few seconds. Close the black window

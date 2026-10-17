@@ -9,6 +9,7 @@ import ui_common
 from fxlab import config, workflow
 from fxlab.audit.store import VALID_CATEGORIES, AuditStore
 
+ui_common.intro("monitor")
 c = ui_common.cfg()
 
 # ---- kill switch (outside the fragment: toggling it must redraw the sidebar too) --- #
@@ -16,11 +17,10 @@ with st.container(border=True):
     on = workflow.kill_switch_active(c)
     left, right = st.columns([3, 1], vertical_alignment="center")
     with left:
-        st.markdown("**Kill switch** · " + (":red[**ACTIVE** - all new entries are blocked]" if on
-                                            else "inactive - entries allowed (paper only)"))
-        st.caption(f"It's a file named `{c['risk']['controls']['kill_switch_file']}` in the project "
-                   "folder, checked before every entry. You can also create or delete it by hand. "
-                   "Every toggle is written to the audit log.")
+        st.markdown(":material/power_settings_new: **Kill switch** · "
+                    + (":red[**ON** - all new entries blocked]" if on else ":green[off]"),
+                    help=f"A file named `{c['risk']['controls']['kill_switch_file']}` in the project "
+                         "folder, checked before every entry. Every toggle is audited.")
     with right:
         if on:
             if st.button("Deactivate", icon=":material/play_arrow:", width="stretch"):
@@ -45,7 +45,7 @@ def live_panel():
     t = st.columns(4)
     t[0].metric("Live trading", "Disabled", help="Hard-disabled in fxlab/paper/broker_interface.py.",
                 border=True, height="stretch")
-    t[1].metric("Data", f"{q.completeness_pct}% complete",
+    t[1].metric("Data complete", f"{q.completeness_pct}%",
                 help=f"{q.n_bars:,} bars, {len(q.missing_periods)} gaps, source {q.source}.",
                 border=True, height="stretch")
     t[2].metric("High-impact events (48h)", f"{len(up)}",
@@ -75,10 +75,13 @@ def live_panel():
         df = df.sort_values("id", ascending=False).head(limit)
         st.dataframe(df[["id", "ts_utc", "category", "strategy", "message", "data_json"]],
                      hide_index=True, alt="Most recent audit log entries",
-                     column_config={"ts_utc": "time (UTC, simulated bar time for paper runs)",
+                     column_order=["ts_utc", "category", "message", "strategy", "data_json", "id"],
+                     column_config={"ts_utc": st.column_config.TextColumn(
+                                        "Time (UTC)", help="Paper-run rows show the simulated bar time."),
                                     "data_json": st.column_config.JsonColumn("data")})
 
 
 live_panel()
-st.caption("Paper-run entries carry the simulated bar's time, so they show historical dates. "
-           "The audit log is append-only; nothing here deletes it.")
+st.caption("Paper-run rows carry the simulated bar time. The log is append-only.")
+
+ui_common.next_step("monitor")

@@ -2,7 +2,8 @@
 import streamlit as st
 
 import ui_common
-from fxlab import journal, workflow
+from fxlab import journal
+from ui_common import APP_NAME, STEP_BY_KEY
 
 c = ui_common.cfg()
 s = c["strategy"]
@@ -15,70 +16,85 @@ dev_runs = [r for r in journal.runs("dev", name) if r["version"] == version and 
 paper_runs = [r for r in journal.runs("paper", name) if r["version"] == version and r["data"] == fp]
 decision = journal.latest_decision(name, version, fp)
 uses = journal.holdout_uses(name, fp)
-
-st.caption(f"Strategy **{name} v{version}** · {s['symbol']} {s['timeframe']} · "
-           f"dataset `{ui_common.data_path().name}` ({data.source})")
-
+n_notes = len(journal.notes(name))
 data_ok = q.n_bad_ohlc == 0 and q.n_duplicate_timestamps == 0 and q.completeness_pct >= 95
-# (done?, title, status line, page)
-steps = [
-    (data_ok, "1 · Check the data",
-     f"{q.n_bars:,} bars, {q.completeness_pct}% complete, {len(q.missing_periods)} gaps"
-     + ("" if data_ok else " - fix the data first"), "app_pages/data.py"),
-    (True, "2 · Define the strategy", f"Version {version}. Change parameters to start a new version.",
-     "app_pages/strategy.py"),
-    (bool(dev_runs), "3 · Tune on development data",
-     f"{len(dev_runs)} dev run(s) of this version" if dev_runs else "Not run for this version yet",
-     "app_pages/dev_backtest.py"),
-    (decision is not None, "4 · Final review (once)",
-     f"{decision['decision']} · hold-out used {uses}x by this strategy" if decision
-     else ("Not reviewed. " + (f"Hold-out already used {uses}x by older versions."
-                               if uses else "Hold-out untouched.")),
-     "app_pages/review.py"),
-    (bool(paper_runs), "5 · Paper trade",
-     f"{len(paper_runs)} paper run(s)" if paper_runs else "Not run for this version yet",
-     "app_pages/paper.py"),
-    (True, "6 · Monitor", "Kill switch, audit log, upcoming events.", "app_pages/monitor.py"),
-    (bool(journal.notes(name)), "7 · Keep a research log",
-     f"{len(journal.notes(name))} note(s) for this strategy", "app_pages/research_log.py"),
-]
 
-# Suggested next step = first unfinished step among 1-5, guided by the decision.
+# key -> (done?, short status)
+status = {
+    "data": (data_ok, f"{q.n_bars:,} bars · {q.completeness_pct}% complete"
+             + ("" if data_ok else " · fix first")),
+    "strategy": (True, f"Version {version}"),
+    "dev": (bool(dev_runs), f"{len(dev_runs)} run(s) of v{version}" if dev_runs else "Not run yet"),
+    "review": (decision is not None, decision["decision"].replace("_", " ").title() if decision
+               else ("Hold-out untouched" if not uses else f"Hold-out used {uses}x before")),
+    "paper": (bool(paper_runs), f"{len(paper_runs)} run(s)" if paper_runs else "Not run yet"),
+    "monitor": (True, "Kill switch, audit log, news"),
+    "log": (n_notes > 0, f"{n_notes} note(s)" if n_notes else "No notes yet"),
+}
+
+# Suggested next step, guided by the review decision.
 if not data_ok:
-    nxt = steps[0]
+    nxt = "data"
 elif not dev_runs:
-    nxt = steps[2]
+    nxt = "dev"
 elif decision is None:
-    nxt = steps[3]
+    nxt = "review"
 elif decision["decision"] == "ELIGIBLE_FOR_PAPER" and not paper_runs:
-    nxt = steps[4]
+    nxt = "paper"
 elif decision["decision"] != "ELIGIBLE_FOR_PAPER":
-    nxt = steps[6]
+    nxt = "log"
 else:
-    nxt = steps[5]
+    nxt = "monitor"
+nstep = STEP_BY_KEY[nxt]
 
+# ---- hero ------------------------------------------------------------------ #
 with st.container(border=True):
-    st.markdown(f"**Suggested next step: {nxt[1]}**")
-    if decision and decision["decision"] != "ELIGIBLE_FOR_PAPER" and nxt is steps[6]:
-        st.caption("This version did not pass review. Record what you learned, then start a "
-                   "new idea (Strategy page) rather than tuning until it passes.")
-    st.page_link(nxt[3], label=f"Go to {nxt[1][4:]}", icon=":material/arrow_forward:")
+    st.title(APP_NAME, icon=":material/candlestick_chart:")
+    st.caption("Research, test and paper-trade forex strategies honestly.")
+    with st.container(horizontal=True):
+        st.badge(f"{name} · v{version}", icon=":material/tune:", color="blue")
+        st.badge(f"{s['symbol']} {s['timeframe']}", icon=":material/currency_exchange:", color="gray")
+        ui_common.decision_badge(decision["decision"] if decision else None)
+    done = sum(1 for d, _ in status.values() if d)
+    st.progress(done / len(status), text=f"{done} of {len(status)} steps done")
 
-cols = st.columns(2)
-for i, (done, title, status, page) in enumerate(steps):
-    with cols[i % 2].container(border=True, height="stretch"):
-        icon = ":material/check_circle:" if done else ":material/radio_button_unchecked:"
-        st.markdown(f"{icon} **{title}**")
-        st.caption(status)
-        st.page_link(page, label="Open", icon=":material/open_in_new:")
+    why = {
+        "data": "The data has problems. Fix them before testing anything.",
+        "dev": "Tune this version on the development data.",
+        "review": "Happy with the dev results? Judge it once on the hold-out.",
+        "paper": "It passed review. Rehearse it with simulated fills.",
+        "log": "It didn't pass. Note what you learned, then try a new idea.",
+        "monitor": "Keep an eye on the safety switch and audit log.",
+    }[nxt]
+    st.markdown(f"**Next:** {why}")
+    if st.button(f"Go to {nstep.num} · {nstep.title}", icon=":material/arrow_forward:",
+                 icon_position="right", type="primary", width="stretch", key="do_next"):
+        st.switch_page(nstep.page)
 
-with st.expander("The one rule: don't tune on the hold-out", icon=":material/lock:"):
-    st.markdown(
-        "The last part of the data (the **hold-out**) stands in for the future. "
-        "The *Dev backtest* page never touches it. The *Final review* page is the "
-        "only place it is judged, and every review is written to a ledger. If you "
-        "change parameters after seeing the review and run it again, you are fitting "
-        "the strategy to that slice, and an 'eligible' result stops meaning anything. "
-        "Bumping the version number does not reset this, because the ledger counts "
-        "uses per strategy name."
-    )
+# ---- quick actions ---------------------------------------------------------- #
+with st.container(horizontal=True):
+    if st.button("Run dev backtest", icon=":material/play_arrow:", key="quick_dev"):
+        st.session_state["autorun_dev"] = True
+        st.switch_page(STEP_BY_KEY["dev"].page)
+    if st.button("Edit strategy", icon=":material/tune:", key="quick_strategy"):
+        st.switch_page(STEP_BY_KEY["strategy"].page)
+    if st.button("Add a note", icon=":material/edit_note:", key="quick_note"):
+        st.switch_page(STEP_BY_KEY["log"].page)
+
+# ---- all steps -------------------------------------------------------------- #
+st.subheader("Your workflow", icon=":material/route:")
+# Two cards per ROW (not two long columns), so a phone shows them in order 1..7.
+steps_list = ui_common.STEPS
+for row_start in range(0, len(steps_list), 2):
+    cols = st.columns(2)
+    for col, step in zip(cols, steps_list[row_start:row_start + 2]):
+        ok, text = status[step.key]
+        with col.container(border=True, height="stretch"):
+            with st.container(horizontal=True, vertical_alignment="center"):
+                st.markdown(f"{':material/check_circle:' if ok else ':material/radio_button_unchecked:'} "
+                            f"**{step.num} · {step.title}**")
+                st.page_link(step.page, label="Open", icon=":material/open_in_new:")
+            st.caption(text)
+
+with st.popover("The one rule: don't tune on the hold-out", icon=":material/lock:"):
+    st.markdown(STEP_BY_KEY["review"].explain)

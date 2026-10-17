@@ -1,5 +1,54 @@
+# PipLab dashboard settings.
+# Theme: "trading terminal" dark look, adapted from Streamlit's bundled
+# financial-dashboard template. Colors live here (not in CSS) so every widget,
+# table and chart picks them up consistently.
+
 [theme]
-primaryColor = "#2a78d6"
+base = "dark"
+primaryColor = "#60A5FA"             # accent blue (buttons, links, highlights)
+backgroundColor = "#0F172A"          # deep slate
+secondaryBackgroundColor = "#1E293B" # cards, inputs
+codeBackgroundColor = "#1E293B"
+textColor = "#F1F5F9"
+linkColor = "#60A5FA"
+borderColor = "#334155"
+codeTextColor = "#CBD5E1"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "8px"
+buttonRadius = "8px"
+font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+baseFontSize = 14
+codeFontSize = "13px"
+headingFontSizes = ["28px", "21px", "17px", "15px", "14px", "12px"]
+headingFontWeights = [700, 600, 600, 600, 500, 500]
+linkUnderline = false
+paddingTop = "1.5rem"
+
+# Semantic colors: green = gains / pass, red = losses / fail
+greenColor = "#34D399"
+redColor = "#F87171"
+yellowColor = "#FBBF24"
+orangeColor = "#FB923C"
+blueColor = "#60A5FA"
+violetColor = "#A78BFA"
+grayColor = "#94A3B8"
+
+chartCategoricalColors = ["#60A5FA", "#FB923C", "#A78BFA", "#34D399", "#FBBF24", "#38BDF8", "#94A3B8", "#F87171"]
+
+dataframeBorderColor = "#334155"
+dataframeHeaderBackgroundColor = "#1E293B"
+dataframeHeaderTextColor = "#F8FAFC"
+
+[theme.sidebar]
+backgroundColor = "#0B1222"
+secondaryBackgroundColor = "#1E293B"
+codeBackgroundColor = "#1E293B"
+textColor = "#F1F5F9"
+borderColor = "#334155"
+primaryColor = "#60A5FA"
 
 [server]
 # NOTE: the "this computer only" restriction (--server.address 127.0.0.1) is passed

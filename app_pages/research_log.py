@@ -5,6 +5,7 @@ import streamlit as st
 import ui_common
 from fxlab import journal
 
+ui_common.intro("log")
 c = ui_common.cfg()
 s = c["strategy"]
 name, version = s["name"], str(s.get("version", "0"))
@@ -16,14 +17,14 @@ with st.form("note", clear_on_submit=True):
     if st.form_submit_button(f"Add note to {name} v{version}", icon=":material/add:", type="primary"):
         try:
             journal.add_note(strategy=name, version=version, kind=kind or "observation", text=text)
-            st.success("Note saved.", icon=":material/check_circle:")
+            st.toast("Note saved.", icon=":material/check_circle:")
         except ValueError as exc:
             st.error(str(exc), icon=":material/error:")
 
 scope = st.segmented_control("Show", ["This strategy", "All strategies"], default="This strategy")
 who = name if scope == "This strategy" else None
 
-st.subheader("Notes")
+st.subheader("Notes", icon=":material/sticky_note_2:")
 notes = journal.notes(who)
 if notes:
     nd = pd.DataFrame([{"time (UTC)": n["ts_utc"].replace("T", " ")[:16], "strategy": n["strategy"],
@@ -36,7 +37,7 @@ else:
     st.caption("No notes yet. A line per idea - what you tried and why you kept or dropped it - "
                "stops you re-testing ideas you've already rejected.")
 
-st.subheader("Final reviews")
+st.subheader("Final reviews", icon=":material/gavel:")
 revs = journal.reviews(who)
 if revs:
     st.dataframe(pd.DataFrame([{"time (UTC)": r["ts_utc"].replace("T", " ")[:16],
@@ -48,7 +49,7 @@ if revs:
 else:
     st.caption("Reviews are recorded here automatically.")
 
-st.subheader("Runs")
+st.subheader("Runs", icon=":material/history:")
 runs = journal.runs(strategy=who)
 if runs:
     st.dataframe(pd.DataFrame([{"time (UTC)": r["ts_utc"].replace("T", " ")[:16], "kind": r["kind"],
